@@ -1,4 +1,4 @@
-package com.celtra.sbt
+package org.slackoverflow.sbt
 
 import java.io.File
 import java.util.regex.Pattern
@@ -36,7 +36,7 @@ object SbtStartScript extends Plugin {
         val testPackage = TaskKey[String]("test-package", "Base package in which test suites will be looked for")
     }
 
-    import com.celtra.sbt.SbtStartScript.StartScriptKeys._
+    import org.slackoverflow.sbt.SbtStartScript.StartScriptKeys._
 
     val scriptName: String = "start"
     val testScriptName: String = "test"
@@ -283,7 +283,7 @@ exec java $JAVA_OPTS -cp "@CLASSPATH@" org.scalatest.tools.Runner -oF -w @TEST_P
 
 """
         val script = renderTemplate(template, Map("SCRIPT_ROOT_DETECT" -> scriptRootDetect(baseDirectory, scriptFile, None),
-            "ENV_VARS" -> envVars.foldLeft("")( (acc, kv) => acc + s"export ${kv._1}=${kv._2}\n"),
+            "ENV_VARS" -> envVars.foldLeft("")((acc, kv) => acc + s"export ${kv._1}=${kv._2}\n"),
             "CLASSPATH" -> cpString.value,
             "TEST_PACKAGE" -> testPackage,
             "TARGET" -> relativizeFile(baseDirectory, target, "$PROJECT_DIR").toString))

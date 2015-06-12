@@ -30,7 +30,8 @@ This is a fork of the original https://github.com/sbt/sbt-start-script/
 ## Staging tests
 
 This plugin creates a script to run tests, similar to above described
-start script. To stage tests run `test:stage`.
+start script. To stage tests run `test:stage`. This creates a `target/test`
+script that invokes scalatest Runner.
 
 ## Details
 

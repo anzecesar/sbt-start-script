@@ -22,7 +22,7 @@ object StartScriptBuild extends Build {
             ScalariformKeys.preferences in Compile := formatPrefs,
             ScalariformKeys.preferences in Test    := formatPrefs) ++
         Seq(sbtPlugin := true,
-            organization := "com.celtra.sbt",
+            organization := "org.slackoverflow.sbt",
             name := "sbt-start-script",
             scalacOptions := Seq("-unchecked", "-deprecation"),
 
@@ -44,8 +44,8 @@ object StartScriptBuild extends Build {
 
             // publish stuff
             publishTo <<= (version) { v =>
-              def scalasbt(repo: String) = ("scalasbt " + repo, "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-" + repo)
-              val (name, repo) = if (v.endsWith("-SNAPSHOT")) scalasbt("snapshots") else scalasbt("releases")
+              def trycom(repo: String) = ("trycom " + repo, s"http://trycom.artifactoryonline.com/trycom/plugins-$repo-local")
+              val (name, repo) = if (v.endsWith("-SNAPSHOT")) trycom("snapshots") else trycom("release")
               Some(Resolver.url(name, url(repo))(Resolver.ivyStylePatterns))
             },
             publishMavenStyle := false,
