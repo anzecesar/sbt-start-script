@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 import _root_.sbt._
 import sbt.Defaults._
 import sbt.Keys._
+import sbt.Tests.Argument
 
 object SbtStartScript extends Plugin {
     override lazy val settings = Seq(commands += addStartScriptTasksCommand)
@@ -60,7 +61,7 @@ object SbtStartScript extends Plugin {
     val startScriptForClassesSettings: Seq[Def.Setting[_]] = Seq(
         startScriptForClasses in Compile <<= (streams, startScriptBaseDirectory, startScriptFile in Compile, relativeFullClasspathString in Compile, mainClass in Compile) map startScriptForClassesTask,
         startScript in Compile <<= startScriptForClasses in Compile,
-        startScriptForClasses in Test <<= (streams, startScriptBaseDirectory, testScriptFile in Test, relativeTestClasspathString in Test, testPackage, classDirectory in Test, envVars in Test) map startScriptForScalaTestTask,
+        startScriptForClasses in Test <<= (streams, startScriptBaseDirectory, testScriptFile in Test, relativeTestClasspathString in Test, testPackage, classDirectory in Test, envVars in Test, testOptions in Test) map startScriptForScalaTestTask,
         startScript in Test <<= startScriptForClasses in Test) ++ genericStartScriptSettings
 
     // Extracted.getOpt is not in 10.1 and earlier
@@ -273,20 +274,29 @@ exec java $JAVA_OPTS -cp "@CLASSPATH@" "$MAINCLASS" "$@"
         scriptFile
     }
 
-    def startScriptForScalaTestTask(streams: TaskStreams, baseDirectory: File, scriptFile: File, cpString: RelativeClasspathString, testPackage: String, target: File, envVars: Map[String, String]) = {
-        val template: String = """#!/bin/bash
-@SCRIPT_ROOT_DETECT@
+    def startScriptForScalaTestTask(streams: TaskStreams, baseDirectory: File, scriptFile: File,
+        cpString: RelativeClasspathString, testPackage: String,
+        target: File, envVars: Map[String, String], testOptions: Seq[TestOption]) = {
+        val template: String =
+            """ #!/bin/bash
+              | @SCRIPT_ROOT_DETECT@
+              |
+              | @ENV_VARS@
+              |
+              | exec java $JAVA_OPTS -cp "@CLASSPATH@" org.scalatest.tools.Runner @TEST_ARGS@ -w @TEST_PACKAGE@ -R @TARGET@
+              |
+          """.stripMargin
+        val testArgs = testOptions.map {
+            case Argument(_, args) => args.mkString(" ")
+            case _ => ""
+        }.filter(_ != "").mkString(" ")
 
-@ENV_VARS@
-
-exec java $JAVA_OPTS -cp "@CLASSPATH@" org.scalatest.tools.Runner -oF -w @TEST_PACKAGE@ -R @TARGET@
-
-"""
         val script = renderTemplate(template, Map("SCRIPT_ROOT_DETECT" -> scriptRootDetect(baseDirectory, scriptFile, None),
             "ENV_VARS" -> envVars.foldLeft("")((acc, kv) => acc + s"export ${kv._1}=${kv._2}\n"),
             "CLASSPATH" -> cpString.value,
             "TEST_PACKAGE" -> testPackage,
-            "TARGET" -> relativizeFile(baseDirectory, target, "$PROJECT_DIR").toString))
+            "TARGET" -> relativizeFile(baseDirectory, target, "$PROJECT_DIR").toString,
+            "TEST_ARGS" -> testArgs))
         writeScript(scriptFile, script)
         streams.log.info("Wrote test script for to " + scriptFile)
         scriptFile

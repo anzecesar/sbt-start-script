@@ -1,9 +1,9 @@
 import sbt._
 
 import Keys._
-import Project.Initialize
 import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import bintray.BintrayKeys._
 
 object StartScriptBuild extends Build {
     def formatPrefs = {
@@ -35,19 +35,16 @@ object StartScriptBuild extends Build {
             // Versions and git tags should follow: http://semver.org/
             // except using -SNAPSHOT instead of without hyphen.
 
-            version := "0.10.1",
+            version := "0.10.2",
+            scalaVersion := "2.10.5",
+            sbtVersion := "0.13.8",
             libraryDependencies <++= sbtVersion { (version) =>
-		          Seq("org.scala-sbt" % "io" % version % "provided",
-			            "org.scala-sbt" % "logging" % version % "provided",
-			            "org.scala-sbt" % "process" % version % "provided")
+              Seq("org.scala-sbt" % "io" % version % "provided",
+                  "org.scala-sbt" % "logging" % version % "provided",
+                  "org.scala-sbt" % "process" % version % "provided")
             },
 
-            // publish stuff
-            publishTo <<= (version) { v =>
-              def trycom(repo: String) = ("trycom " + repo, s"http://trycom.artifactoryonline.com/trycom/plugins-$repo-local")
-              val (name, repo) = if (v.endsWith("-SNAPSHOT")) trycom("snapshots") else trycom("release")
-              Some(Resolver.url(name, url(repo))(Resolver.ivyStylePatterns))
-            },
+            bintrayRepository := "maven",
             publishMavenStyle := false,
             credentials += Credentials(Path.userHome / ".ivy2" / ".sbt-credentials"))
 }
